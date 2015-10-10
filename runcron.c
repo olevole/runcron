@@ -134,8 +134,7 @@ int
 main(int argc, char **argv)
 {
 	int ch, flags, silent, waitsec, i=0, cmdsize=1;
-	pid_t child;
-
+	pid_t child=1;
 
 	if (argc==1) usage();
 
@@ -172,7 +171,7 @@ main(int argc, char **argv)
 	}
 
 	if (child != 0) {
-		// this is child
+		// this is parent
 		(void)gettimeofday(&before, NULL);
 
 		void * tmp = NULL;
@@ -215,7 +214,7 @@ main(int argc, char **argv)
 
 		lockname=malloc(strlen(md5str)+strlen(LOCKDIR)+strlen(LOCKFILE_POSTFIX)+2); // +2 "/ between dir/file"
 		sprintf(lockname,"%s/%s%s",LOCKDIR,md5str,LOCKFILE_POSTFIX);
-        }
+	}
 
 	lockfd = acquire_lock(lockname, flags | O_NONBLOCK);
 	while (lockfd == -1 && !timed_out && waitsec != 0) {
