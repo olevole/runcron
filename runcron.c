@@ -56,7 +56,7 @@ static const char default_format[] = "%Y-%m-%d %H:%M:%S";
 #define MAILCMD "/usr/sbin/sendmail"
 #define MAILARGS "%s -FCronDaemon -odi -oem -oi -t"
 #define MAILTO "root"
-#define MYVERSION "0.5"
+#define MYVERSION "0.8"
 
 int send_lock_alert()
 {
@@ -147,14 +147,15 @@ main(int argc, char **argv)
 	flags = O_CREAT;
 	waitsec = -1;	/* Infinite. */
 
-	while ((ch = getopt(argc, argv, "m:")) != -1) {
+	while ((ch = getopt(argc, argv, "+m:")) != -1) {
 		switch (ch) {
 			case 'm':
-				{
 					mailto = malloc(strlen(optarg) + 1);
 					memset(mailto, 0, strlen(optarg) + 1);
 					strcpy(mailto, optarg);
-				}
+				break;
+			case '?':
+			default:
 				break;
 		}
 	}
