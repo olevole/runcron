@@ -1,5 +1,4 @@
 # runcron
-# Author olevole@olevole.ru
 
 cron wrapper to guarantee of a single process at time with extra feature:
 
@@ -9,4 +8,7 @@ cron wrapper to guarantee of a single process at time with extra feature:
 
 usage:
 
-  ./runcron [-m mailto] <cmd> ...
+  ./runcron [-m mailto] [-a action-hook-path] <cmd> ...
+  
+
+Author: olevole@olevole.ru
