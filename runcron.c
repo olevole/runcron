@@ -1,10 +1,12 @@
 // Враппер для запуска крона, пресекающий дубляж и алертящий, если такое происходит
 // 1) Указывать путь к лок файлу ненадо, он генерируется на основе argv[]
 // и создается в /tmp/<md5>.flock
-// 2) Когда лог уже поставлен, делаем нотифи через в syslog
+// 2) Когда лок уже поставлен, делаем нотифи через в syslog
 // 3) В конце отработки пишем суммарную инфу о старте-стопе и времени работы (todo: можно rusage впихнуть)
+// 4) Если указан -a , запускаем скрипт -a <path> с аргументом кода ошибки
 // Запуск:
 //     runcron <cmd> ...
+//     runcron -a action-hook.sh -s nobody@nowhere.here vmstat 10
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -19,6 +21,7 @@
 #include <openssl/md5.h>
 #include <unistd.h>
 #include <syslog.h>
+#include <limits.h>
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -44,6 +47,8 @@ char *cmd = NULL;
 char *md5str = NULL;
 char *lockname = NULL;
 char *mailto = NULL;
+char action_script[PATH_MAX];
+char *action = NULL;
 
 int status = 0;
 
@@ -56,7 +61,7 @@ static const char default_format[] = "%Y-%m-%d %H:%M:%S";
 #define MAILCMD "/usr/sbin/sendmail"
 #define MAILARGS "%s -FCronDaemon -odi -oem -oi -t"
 #define MAILTO "root"
-#define MYVERSION "0.8"
+#define MYVERSION "0.9"
 
 int send_lock_alert()
 {
@@ -140,6 +145,7 @@ main(int argc, char **argv)
 
 	mailto=NULL;
 	cmd=NULL;
+	action=NULL;
 
 	cmd=malloc(1);
 
@@ -147,8 +153,13 @@ main(int argc, char **argv)
 	flags = O_CREAT;
 	waitsec = -1;	/* Infinite. */
 
-	while ((ch = getopt(argc, argv, "+m:")) != -1) {
+	while ((ch = getopt(argc, argv, "a:+m:")) != -1) {
 		switch (ch) {
+			case 'a':
+					action = malloc(strlen(optarg) + 1);
+					memset(action, 0, strlen(optarg) + 1);
+					strcpy(action, optarg);
+				break;
 			case 'm':
 					mailto = malloc(strlen(optarg) + 1);
 					memset(mailto, 0, strlen(optarg) + 1);
@@ -256,6 +267,9 @@ main(int argc, char **argv)
 	signal(SIGTERM, killed);
 	if (waitpid(child, &status, 0) == -1)
 		err(EX_OSERR, "waitpid failed");
+
+	status=WEXITSTATUS(status);
+
 	return (WIFEXITED(status) ? WEXITSTATUS(status) : EX_SOFTWARE);
 }
 
@@ -378,6 +392,13 @@ int showtime(FILE *out, struct timeval *before, struct timeval *after)
 
 	syslog(LOG_INFO,"Started: [%s], Ended: [%s], Took: %d sec. MD5: [%s], mailto [%s], status: %d, CMD: %s\n",res1,res2, diff, md5str, mailto, status, cmd);
 	fprintf(out,"Started: [%s], Ended: [%s], Took: %d sec. MD5: [%s], mailto [%s], status: %d, CMD: %s\n",res1,res2, diff, md5str, mailto, status, cmd);
+
+	if (action) {
+		memset(action_script,0,sizeof(action_script));
+		sprintf(action_script,"%s %d",action,status);
+		system(action_script);
+	}
+
 
 	return 0;
 }
