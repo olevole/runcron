@@ -4,6 +4,7 @@
 // 2) Когда лок уже поставлен, делаем нотифи через в syslog
 // 3) В конце отработки пишем суммарную инфу о старте-стопе и времени работы (todo: можно rusage впихнуть)
 // 4) Если указан -a , запускаем скрипт -a <path> с аргументом кода ошибки
+// 5) -c <cwd> - chdir before command execution
 // Запуск:
 //     runcron <cmd> ...
 //     runcron -a action-hook.sh -s nobody@nowhere.here vmstat 10
@@ -153,18 +154,21 @@ main(int argc, char **argv)
 	flags = O_CREAT;
 	waitsec = -1;	/* Infinite. */
 
-	while ((ch = getopt(argc, argv, "a:+m:")) != -1) {
+	while ((ch = getopt(argc, argv, "a:c:+m:")) != -1) {
 		switch (ch) {
 			case 'a':
 					action = malloc(strlen(optarg) + 1);
 					memset(action, 0, strlen(optarg) + 1);
 					strcpy(action, optarg);
-				break;
+					break;
+			case 'c':
+					chdir(optarg);
+					break;
 			case 'm':
 					mailto = malloc(strlen(optarg) + 1);
 					memset(mailto, 0, strlen(optarg) + 1);
 					strcpy(mailto, optarg);
-				break;
+					break;
 			case '?':
 			default:
 				break;
@@ -337,7 +341,7 @@ killed(int sig)
 static void
 usage(void)
 {
-	fprintf(stderr,"version %s, usage: runcron [-m mailto] command [arguments]\n",MYVERSION);
+	fprintf(stderr,"version %s, usage: runcron [-a post-action-file] [-c chdir] [-m mailto] command [arguments]\n",MYVERSION);
 	exit(EX_USAGE);
 }
 
