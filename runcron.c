@@ -154,7 +154,7 @@ main(int argc, char **argv)
 	flags = O_CREAT;
 	waitsec = -1;	/* Infinite. */
 
-	while ((ch = getopt(argc, argv, "a:c:+m:")) != -1) {
+	while ((ch = getopt(argc, argv, "+a:+c:+m:")) != -1) {
 		switch (ch) {
 			case 'a':
 					action = malloc(strlen(optarg) + 1);
