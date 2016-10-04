@@ -11,4 +11,7 @@ usage:
   ./runcron [-m mailto] [-a action-hook-path] <cmd> ...
   
 
+build deps:
+   Linux: libssl-dev, libssl1.0.0+
+
 Author: olevole@olevole.ru
